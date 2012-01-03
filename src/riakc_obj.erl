@@ -192,7 +192,7 @@ update_metadata(Object=#riakc_obj{}, M) ->
 %% @doc  Set the update index on an object to I.
 -spec update_index(#riakc_obj{}, indexes()) -> #riakc_obj{}.
 update_index(Object, Indexes) ->
-    update_metadata(Object, dict:store(?MD_INDEX, Indexes, dict:new())).
+    update_metadata(Object, dict:store(?MD_INDEX, Indexes, get_update_metadata(Object))).
 
 %% @doc  Set the updated content-type of an object to CT.
 -spec update_content_type(#riakc_obj{},content_type()|binary()) -> #riakc_obj{}.
