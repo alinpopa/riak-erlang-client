@@ -46,6 +46,7 @@
          update_value/3,
          update_content_type/2,
          get_update_metadata/1,
+         get_update_index/1,
          get_update_content_type/1,
          get_update_value/1,
          md_ctype/1,
@@ -228,6 +229,12 @@ get_update_metadata(#riakc_obj{updatemetadata=UM}=Object) ->
             UM
     end.
 
+%% @doc  Return the updated index of this riakc_obj.
+-spec get_update_index(#riakc_obj{}) -> metadata().
+get_update_index(Object) ->
+    UpdatedMetadata = get_update_metadata(Object),
+    dict:filter(fun(Key, _Value) -> Key =:= ?MD_INDEX end, UpdatedMetadata).
+
 %% @doc Return the content type of the update value
 get_update_content_type(Object=#riakc_obj{}) ->
     UM = get_update_metadata(Object),
@@ -341,6 +348,33 @@ update_index_test() ->
     UpdatedMetadata = get_update_metadata(UpdatedObject),
     
     ?assertEqual(ExpectedIndexes, UpdatedMetadata).
+
+get_update_index_test() ->
+    Object = riakc_obj:new(<<"bucket">>, <<"key">>),
+    Indexes = [{<<"test_index_bin">>, <<"test_value">>}],
+    MetadataWithIndexes = dict:store(?MD_INDEX, Indexes, dict:new()),
+    ContentTypeMetadata = dict:store(?MD_CTYPE, "text/plain", MetadataWithIndexes),
+    ObjectWithMetadata = riakc_obj:update_metadata(Object, ContentTypeMetadata),
+    
+    UpdatedIndex = riakc_obj:get_update_index(ObjectWithMetadata),
+
+    ?assertEqual(MetadataWithIndexes, UpdatedIndex).
+
+get_update_index_should_be_empty_when_no_index_test() ->
+    Object = riakc_obj:new(<<"bucket">>, <<"key">>),
+    ContentTypeMetadata = dict:store(?MD_CTYPE, "text/plain", dict:new()),
+    ObjectWithMetadata = riakc_obj:update_metadata(Object, ContentTypeMetadata),
+
+    UpdatedIndex = riakc_obj:get_update_index(ObjectWithMetadata),
+
+    ?assertEqual(0, dict:size(UpdatedIndex)).
+
+get_update_index_should_be_empty_when_no_updated_metadata_test() ->
+    Object = riakc_obj:new(<<"bucket">>, <<"key">>),
+    
+    UpdatedIndex = riakc_obj:get_update_index(Object),
+    
+    ?assertEqual(0, dict:size(UpdatedIndex)).
 
 update_value_test() ->
     O = riakc_obj:new(<<"b">>, <<"k">>),
